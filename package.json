@@ -1,0 +1,14 @@
+{
+  "name": "randomideas",
+  "version": "1.0.0",
+  "description": "ideas sharing app",
+  "license": "ISC",
+  "author": "Jesse.G",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
