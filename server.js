@@ -1,44 +1,52 @@
+const path = require('path');
 const express = require('express');
-const port = 5000;
+const cors = require('cors');
+require('dotenv').config();
+const port = process.env.PORT || 5000;
+const connectDB = require('./config/db');
 const app = express();
-const ideas = [
-  {
-    id: 1,
-    text: 'This is a sample idea',
-    tag: 'sample',
-    user: 'JohnDoe',
-    date: '2023-06-01',
-  },
-  {
-    id: 2,
-    text: 'Another idea for testing',
-    tag: 'test',
-    user: 'JaneDoe',
-    date: '2023-06-02',
-  },
-  {
-    id: 3,
-    text: 'A third idea for testing',
-    tag: 'test',
-    user: 'BobSmith',
-    date: '2023-06-03',
-  },
-];
+
+// Static Folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware to parse JSON request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Middleware to enable CORS
+app.use(
+  cors({
+    origin: ['http://localhost:5000', 'http://localhost:3000'],
+    credentials: true,
+  }),
+);
 
 app.get('/', (req, res) => {
   res.send({ message: 'Welcome to the Random Ideas API' });
 });
-app.get('/api/ideas', (req, res) => {
-  res.send({ success: true, data: ideas });
-});
-app.get('/api/ideas/:id', (req, res) => {
-  const idea = ideas.find((i) => i.id === +req.params.id);
-  if (!idea) {
-    return res.status(404).json({ success: false, message: 'Idea not found' });
-  }
-  res.send({ success: true, data: idea });
-});
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+const ideasRouter = require('./router/ideas');
+app.use('/api/ideas', ideasRouter);
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error(
+      'Failed to start the server because MongoDB could not be reached.',
+    );
+    if (error.code === 'ECONNREFUSED' && error.syscall === 'querySrv') {
+      console.error(
+        `DNS refused the SRV lookup for ${error.hostname}. Check your network and DNS settings.`,
+      );
+    } else {
+      console.error(error.message);
+    }
+    process.exit(1);
+  }
+};
+
+startServer();
